@@ -24,22 +24,21 @@ from typing import List
 import httpx
 import json
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter()
 
-
 # ── Gemini AI Helper Function ─────────────────────────
 async def call_gemini(prompt: str) -> str:
-    """
-    Calls Google Gemini API and returns the response text.
-    Free tier — no cost!
-    """
     api_key = os.getenv("GEMINI_API_KEY", "")
+    print(f"🔑 API Key: {api_key[:15]}..." if api_key else "❌ NO API KEY!")
+
     if not api_key:
-        # Return mock data if no API key yet
         return None
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={api_key}"
 
     payload = {
         "contents": [{
@@ -47,10 +46,15 @@ async def call_gemini(prompt: str) -> str:
         }]
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=payload, timeout=30)
-        data = response.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, timeout=30)
+            print(f"📡 Gemini status: {response.status_code}")
+            data = response.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        print(f"❌ Gemini error: {e}")
+        return None
 
 
 # ── Mock data for testing without API key ────────────
