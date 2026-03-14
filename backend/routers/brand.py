@@ -22,7 +22,7 @@ router = APIRouter()
 # ── Mock brand data for testing ───────────────────────
 def get_mock_brand(title: str) -> dict:
     return {
-        "tagline": f"Empowering your vision with {title}",
+        "tagline": f"{title} — Where great design meets opportunity",
         "brand_voice": "Professional yet approachable",
         "personality_type": "The Innovator",
         "mission_statement": f"To make {title} accessible to everyone",

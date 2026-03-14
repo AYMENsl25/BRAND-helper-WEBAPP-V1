@@ -14,7 +14,7 @@ function Home() {
       position: 'relative',
     }}>
 
-      {/* ── Aurora Background Effect ── */}
+      {/* Aurora Background Effect */}
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -26,7 +26,7 @@ function Home() {
         pointerEvents: 'none',
       }} />
 
-      {/* ── Aurora Beam ── */}
+      {/* Aurora Beam */}
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -39,7 +39,7 @@ function Home() {
         pointerEvents: 'none',
       }} />
 
-      {/* ── Navigation Bar ── */}
+      {/* Navigation Bar */}
       <nav style={{
         display: 'flex',
         alignItems: 'center',
@@ -50,6 +50,7 @@ function Home() {
         borderBottom: '1px solid rgba(192,132,252,0.1)',
         backdropFilter: 'blur(10px)',
       }}>
+
         {/* Logo */}
         <div style={{
           display: 'flex',
@@ -72,20 +73,33 @@ function Home() {
           }}>BELIS</span>
         </div>
 
-        {/* Nav Links */}
-        <div style={{ display: 'flex', gap: '40px' }}>
-          {['Identity Lab', 'Kit Maker', 'Market Intelligence'].map((item) => (
-            <span key={item} style={{
-              color: '#94A3B8',
-              fontSize: '14px',
-              cursor: 'pointer',
-              letterSpacing: '1px',
-              transition: 'color 0.3s',
-            }}
-            onMouseEnter={e => e.target.style.color = '#C084FC'}
-            onMouseLeave={e => e.target.style.color = '#94A3B8'}
+        {/* Nav Links — centered */}
+        <div style={{
+          display: 'flex',
+          gap: '40px',
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }}>
+          {[
+            { label: 'Identity Lab', path: '/lab' },
+            { label: 'Kit Maker', path: '/dashboard' },
+            { label: 'Market Intelligence', path: '/dashboard' },
+          ].map((item) => (
+            <span
+              key={item.label}
+              onClick={() => navigate(item.path)}
+              style={{
+                color: '#94A3B8',
+                fontSize: '14px',
+                cursor: 'pointer',
+                letterSpacing: '1px',
+                transition: 'color 0.3s',
+              }}
+              onMouseEnter={e => e.target.style.color = '#C084FC'}
+              onMouseLeave={e => e.target.style.color = '#94A3B8'}
             >
-              {item}
+              {item.label}
             </span>
           ))}
         </div>
@@ -109,7 +123,7 @@ function Home() {
         </div>
       </nav>
 
-      {/* ── Hero Section ── */}
+      {/* Hero Section */}
       <div style={{
         flex: 1,
         display: 'flex',
@@ -121,7 +135,6 @@ function Home() {
         zIndex: 10,
         padding: '40px',
       }}>
-        {/* Main Headline */}
         <h1 style={{
           color: '#FFFFFF',
           fontSize: '56px',
@@ -145,7 +158,6 @@ function Home() {
           of your brand.
         </h1>
 
-        {/* Subtitle */}
         <p style={{
           color: '#94A3B8',
           fontSize: '16px',
@@ -156,7 +168,6 @@ function Home() {
           AI-Powered Brand Identity & Startup Validation
         </p>
 
-        {/* CTA Button */}
         <button
           onClick={() => navigate('/register')}
           style={{
@@ -186,7 +197,7 @@ function Home() {
         </button>
       </div>
 
-      {/* ── Chatbot Bubble ── */}
+      {/* Chatbot Bubble */}
       <div style={{
         position: 'fixed',
         bottom: '30px',

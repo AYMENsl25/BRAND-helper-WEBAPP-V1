@@ -167,7 +167,7 @@ async def analyze_project(
         "opportunities": "market opportunities",
         "threats": "main threats",
         "estimated_market_size": "e.g. $5 Billion",
-        "target_region": "main regions",
+        "target_region": "specific regions e.g. North America, Europe, Asia (REQUIRED - do not leave empty)",
         "competitors": [
             {{
                 "name": "company name",

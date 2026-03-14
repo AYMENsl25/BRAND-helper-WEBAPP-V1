@@ -108,21 +108,28 @@ function Dashboard() {
         </div>
 
         {/* Nav Links */}
-        <div style={{ display: 'flex', gap: '40px' }}>
-          {['Identity Lab', 'Kit Maker', 'Market Intelligence'].map((item) => (
-            <span key={item} style={{
-              color: '#94A3B8',
-              fontSize: '14px',
-              cursor: 'pointer',
-              letterSpacing: '1px',
-            }}
-            onMouseEnter={e => e.target.style.color = '#C084FC'}
-            onMouseLeave={e => e.target.style.color = '#94A3B8'}
-            >
-              {item}
-            </span>
-          ))}
-        </div>
+        {[
+  { label: 'Identity Lab', path: '/lab' },
+  { label: 'Kit Maker', path: '/dashboard' },
+  { label: 'Market Intelligence', path: '/dashboard' },
+].map((item) => (
+  <span
+    key={item.label}
+    onClick={() => navigate(item.path)}
+    style={{
+      color: '#94A3B8',
+      fontSize: '14px',
+      cursor: 'pointer',
+      letterSpacing: '1px',
+      transition: 'color 0.3s',
+    }}
+    onMouseEnter={e => e.target.style.color = '#C084FC'}
+    onMouseLeave={e => e.target.style.color = '#94A3B8'}
+  >
+    {item.label}
+  </span>
+))}
+
 
         {/* User + Logout */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
