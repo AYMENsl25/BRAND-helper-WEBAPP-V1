@@ -19,6 +19,7 @@ app = FastAPI(
     description="AI-powered Brand Identity & Startup Validation Platform",
 )
 
+# test branches
 
 # ── CORS Middleware ───────────────────────────────────
 # This allows our React frontend to call this API
