@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import create_db_and_tables
 from core.config import settings
-from routers import auth, projects, analysis, brand
+from routers import auth, projects, analysis, brand, feedback, resources
 # from routers import analysis, brand
 
 # ── Create the FastAPI app ────────────────────────────
@@ -61,29 +61,5 @@ app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(projects.router, prefix="/projects", tags=["Projects"])
 app.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])
 app.include_router(brand.router,    prefix="/brand",    tags=["Brand"])
-'''
-
-## Your backend folder should now look like this:
-```
-backend/
-├── main.py           ← just created ✅
-├── database.py       ✅
-├── requirements.txt  ✅
-├── .env              ✅
-├── core/
-│   ├── __init__.py
-│   └── config.py     ✅
-├── models/
-│   ├── __init__.py
-│   ├── user.py       ✅
-│   ├── project.py    ✅
-│   ├── analysis.py   ✅
-│   └── brand_asset.py ✅
-├── schemas/
-│   └── __init__.py
-├── routers/
-│   └── __init__.py
-└── services/
-    └── __init__.py
-    '''
-
+app.include_router(feedback.router,  prefix="/feedback",  tags=["Feedback"])
+app.include_router(resources.router, prefix="/resources", tags=["Resources"])
