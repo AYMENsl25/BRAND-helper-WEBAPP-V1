@@ -1,1 +1,1 @@
-webapp brand helper comming soon commit test
+AI-powered web app that generates brand names, slogans, descriptions and color palettes.
