@@ -20,6 +20,7 @@ app = FastAPI(
 )
 
 # test branches
+# 2nd test
 
 # ── CORS Middleware ───────────────────────────────────
 # This allows our React frontend to call this API
