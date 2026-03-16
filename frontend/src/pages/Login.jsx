@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import client from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -17,18 +19,15 @@ function Login() {
     setLoading(true)
 
     try {
-      // Send as form data (OAuth2 format)
       const form = new FormData()
       form.append('username', formData.email)
       form.append('password', formData.password)
 
       const response = await client.post('/auth/login', form)
-      
-      // Save token to localStorage
       localStorage.setItem('token', response.data.access_token)
-      
-      // Go to dashboard
+      login(response.data.access_token)
       navigate('/dashboard')
+
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid email or password')
     } finally {
