@@ -8,6 +8,10 @@ function Dashboard() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const handleLogoClick = () => {
+    navigate(localStorage.getItem('token') ? '/dashboard' : '/')
+  }
+
   useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem('token')
@@ -85,7 +89,7 @@ function Dashboard() {
       }}>
         {/* Logo */}
         <div
-          onClick={() => navigate('/')}
+          onClick={handleLogoClick}
           style={{
             display: 'flex',
             alignItems: 'center',

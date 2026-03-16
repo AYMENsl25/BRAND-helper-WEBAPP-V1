@@ -28,6 +28,10 @@ function Lab() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const handleLogoClick = () => {
+    navigate(localStorage.getItem('token') ? '/dashboard' : '/')
+  }
+
   const [formData, setFormData] = useState({
     description: '',
     personality: '',
@@ -101,7 +105,7 @@ function Lab() {
         borderBottom: '1px solid rgba(192,132,252,0.1)',
       }}>
         <div
-          onClick={() => navigate('/')}
+          onClick={handleLogoClick}
           style={{
             display: 'flex',
             alignItems: 'center',
