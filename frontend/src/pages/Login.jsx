@@ -5,16 +5,11 @@ import { useAuth } from '../context/AuthContext'
 
 function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' })
   const [touched, setTouched] = useState({ email: false, password: false })
   const [focused, setFocused] = useState({ email: false, password: false })
-  const { login } = useAuth()
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const validate = (name, value) => {
@@ -73,7 +68,6 @@ function Login() {
       localStorage.setItem('token', response.data.access_token)
       login(response.data.access_token)
       navigate('/dashboard')
-
     } catch (err) {
       const detail = err.response?.data?.detail || 'Invalid email or password'
       setFieldErrors({ email: detail, password: '' })
@@ -108,7 +102,6 @@ function Login() {
       overflow: 'hidden',
     }}>
 
-      {/* Aurora Background */}
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -120,7 +113,6 @@ function Login() {
         pointerEvents: 'none',
       }} />
 
-      {/* Login Card */}
       <div style={{
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(192,132,252,0.2)',
@@ -133,7 +125,6 @@ function Login() {
         backdropFilter: 'blur(10px)',
       }}>
 
-        {/* Logo */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -156,7 +147,6 @@ function Login() {
           }}>BELIS</span>
         </div>
 
-        {/* Title */}
         <h2 style={{
           color: '#FFFFFF',
           fontSize: '20px',
@@ -176,10 +166,7 @@ function Login() {
           textTransform: 'uppercase',
         }}>Sign in to continue</p>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} noValidate>
-
-          {/* Email */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{
               color: '#94A3B8',
@@ -202,14 +189,11 @@ function Login() {
               <p style={{
                 color: '#ff6b6b',
                 fontSize: '11px',
-                letterSpacing: '0.5px',
                 marginTop: '6px',
-                marginBottom: '0',
               }}>{fieldErrors.email}</p>
             )}
           </div>
 
-          {/* Password */}
           <div style={{ marginBottom: '32px' }}>
             <label style={{
               color: '#94A3B8',
@@ -232,14 +216,11 @@ function Login() {
               <p style={{
                 color: '#ff6b6b',
                 fontSize: '11px',
-                letterSpacing: '0.5px',
                 marginTop: '6px',
-                marginBottom: '0',
               }}>{fieldErrors.password}</p>
             )}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -272,7 +253,6 @@ function Login() {
           </button>
         </form>
 
-        {/* Register Link */}
         <p style={{
           color: '#94A3B8',
           fontSize: '12px',
@@ -281,9 +261,11 @@ function Login() {
           letterSpacing: '1px',
         }}>
           Don't have an account?{' '}
-          <Link to="/register" style={{ color: '#C084FC', textDecoration: 'none' }}>Create one</Link>
+          <Link to="/register" style={{
+            color: '#C084FC',
+            textDecoration: 'none',
+          }}>Create one</Link>
         </p>
-
       </div>
     </div>
   )
