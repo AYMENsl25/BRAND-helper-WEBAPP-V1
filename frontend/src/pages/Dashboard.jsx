@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import client from '../api/client'
 import { useToast, ToastContainer } from '../components/Toast'
+
+const STAGES = ['idea', 'mvp', 'launched']
 
 const skeletonBase = {
   background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(192,132,252,0.06) 50%, rgba(255,255,255,0.04) 75%)',
@@ -39,6 +41,13 @@ function Dashboard() {
   const [fetchError, setFetchError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
 
+  // Filter state
+  const [search, setSearch] = useState('')
+  const [activeStage, setActiveStage] = useState('')
+  const [activeIndustry, setActiveIndustry] = useState('')
+  const [industries, setIndustries] = useState([])
+  const initialized = useRef(false)
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
@@ -47,6 +56,15 @@ function Dashboard() {
     }
     fetchData()
   }, [])
+
+  // Re-fetch when filters change (debounce search)
+  useEffect(() => {
+    if (!initialized.current) return
+    const timer = setTimeout(() => {
+      fetchProjects({ search, stage: activeStage, industry: activeIndustry })
+    }, search ? 300 : 0)
+    return () => clearTimeout(timer)
+  }, [search, activeStage, activeIndustry])
 
   const fetchData = async () => {
     setFetchError('')
@@ -58,9 +76,33 @@ function Dashboard() {
       ])
       setUser(userRes.data)
       setProjects(projectsRes.data)
+      setIndustries([...new Set(projectsRes.data.map(p => p.industry).filter(Boolean))])
+      initialized.current = true
     } catch (err) {
       const status = err.response?.status
       if (status === 401) {
+        localStorage.removeItem('token')
+        navigate('/login')
+      } else {
+        setFetchError(err.response?.data?.detail || 'Failed to load your projects. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchProjects = async (filters = {}) => {
+    setFetchError('')
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (filters.search) params.set('search', filters.search)
+      if (filters.stage) params.set('stage', filters.stage)
+      if (filters.industry) params.set('industry', filters.industry)
+      const res = await client.get(`/projects/?${params}`)
+      setProjects(res.data)
+    } catch (err) {
+      if (err.response?.status === 401) {
         localStorage.removeItem('token')
         navigate('/login')
       } else {
@@ -108,11 +150,22 @@ function Dashboard() {
       </div>
 
       {[
-        { label: 'Identity Lab', path: '/lab' },
-        { label: 'Kit Maker', path: '/dashboard' },
-        { label: 'Market Intelligence', path: '/dashboard' },
+        { label: 'Identity Lab', onClick: () => navigate('/lab') },
+        { label: 'Resources', onClick: () => navigate('/resources') },
+        {
+          label: 'Kit Maker',
+          onClick: () => projects.length > 0
+            ? navigate(`/project/${projects[0].id}?tab=brand`)
+            : navigate('/lab'),
+        },
+        {
+          label: 'Market Intelligence',
+          onClick: () => projects.length > 0
+            ? navigate(`/project/${projects[0].id}?tab=market`)
+            : navigate('/lab'),
+        },
       ].map(item => (
-        <span key={item.label} onClick={() => navigate(item.path)} style={{
+        <span key={item.label} onClick={item.onClick} style={{
           color: '#94A3B8', fontSize: '14px', cursor: 'pointer', letterSpacing: '1px', transition: 'color 0.3s',
         }}
           onMouseEnter={e => e.target.style.color = '#C084FC'}
@@ -121,7 +174,14 @@ function Dashboard() {
       ))}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        {user && <span style={{ color: '#94A3B8', fontSize: '12px', letterSpacing: '1px' }}>{user.email}</span>}
+        {user && (
+          <span
+            onClick={() => navigate('/profile')}
+            style={{ color: '#94A3B8', fontSize: '12px', letterSpacing: '1px', cursor: 'pointer' }}
+            onMouseEnter={e => e.target.style.color = '#C084FC'}
+            onMouseLeave={e => e.target.style.color = '#94A3B8'}
+          >{user.email}</span>
+        )}
         <button onClick={handleLogout} style={{
           background: 'transparent', border: '1px solid rgba(192,132,252,0.3)',
           color: '#94A3B8', padding: '8px 16px', fontSize: '11px', letterSpacing: '2px',
@@ -141,6 +201,7 @@ function Dashboard() {
           0%   { background-position: -600px 0; }
           100% { background-position:  600px 0; }
         }
+        input::placeholder { color: #475569; }
       `}</style>
 
       <ToastContainer toasts={toasts} />
@@ -168,6 +229,61 @@ function Dashboard() {
             onMouseEnter={e => { e.target.style.background = '#C084FC'; e.target.style.color = '#030005' }}
             onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.color = '#C084FC' }}
           >+ New Identity</button>
+        </div>
+
+        {/* Search & Filters */}
+        <div style={{ marginBottom: '32px' }}>
+          {/* Search bar */}
+          <input
+            type="text"
+            placeholder="Search projects..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(192,132,252,0.15)',
+              color: '#E2E8F0', padding: '10px 16px',
+              fontSize: '13px', letterSpacing: '0.5px',
+              outline: 'none', marginBottom: '16px',
+            }}
+            onFocus={e => e.target.style.borderColor = 'rgba(192,132,252,0.45)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(192,132,252,0.15)'}
+          />
+
+          {/* Stage filters */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: industries.length > 0 ? '10px' : '0' }}>
+            {['', ...STAGES].map(s => {
+              const active = activeStage === s
+              return (
+                <button key={s || 'all'} onClick={() => setActiveStage(s)} style={{
+                  background: active ? 'rgba(192,132,252,0.15)' : 'transparent',
+                  border: `1px solid ${active ? '#C084FC' : 'rgba(192,132,252,0.2)'}`,
+                  color: active ? '#C084FC' : '#64748B',
+                  padding: '5px 14px', fontSize: '10px',
+                  letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer',
+                }}>{s || 'All'}</button>
+              )
+            })}
+          </div>
+
+          {/* Industry filters (dynamic) */}
+          {industries.length > 0 && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {['', ...industries].map(ind => {
+                const active = activeIndustry === ind
+                return (
+                  <button key={ind || 'all-ind'} onClick={() => setActiveIndustry(ind)} style={{
+                    background: active ? 'rgba(147,51,234,0.15)' : 'transparent',
+                    border: `1px solid ${active ? '#9333EA' : 'rgba(147,51,234,0.2)'}`,
+                    color: active ? '#9333EA' : '#64748B',
+                    padding: '5px 14px', fontSize: '10px',
+                    letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer',
+                  }}>{ind || 'All Industries'}</button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Skeleton loading */}
@@ -211,15 +327,31 @@ function Dashboard() {
               margin: '0 auto 24px', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '24px',
             }}>✦</div>
-            <p style={{
-              color: '#94A3B8', fontSize: '12px', letterSpacing: '3px',
-              textTransform: 'uppercase', marginBottom: '24px',
-            }}>No projects yet</p>
-            <button onClick={() => navigate('/lab')} style={{
-              background: 'transparent', border: '1px solid #C084FC',
-              color: '#C084FC', padding: '12px 32px', fontSize: '12px',
-              letterSpacing: '3px', textTransform: 'uppercase', cursor: 'pointer',
-            }}>Create Your First Identity</button>
+            {(search || activeStage || activeIndustry) ? (
+              <>
+                <p style={{
+                  color: '#94A3B8', fontSize: '12px', letterSpacing: '3px',
+                  textTransform: 'uppercase', marginBottom: '24px',
+                }}>No projects match your filters</p>
+                <button onClick={() => { setSearch(''); setActiveStage(''); setActiveIndustry('') }} style={{
+                  background: 'transparent', border: '1px solid rgba(192,132,252,0.3)',
+                  color: '#94A3B8', padding: '10px 28px', fontSize: '11px',
+                  letterSpacing: '3px', textTransform: 'uppercase', cursor: 'pointer',
+                }}>Clear Filters</button>
+              </>
+            ) : (
+              <>
+                <p style={{
+                  color: '#94A3B8', fontSize: '12px', letterSpacing: '3px',
+                  textTransform: 'uppercase', marginBottom: '24px',
+                }}>No projects yet</p>
+                <button onClick={() => navigate('/lab')} style={{
+                  background: 'transparent', border: '1px solid #C084FC',
+                  color: '#C084FC', padding: '12px 32px', fontSize: '12px',
+                  letterSpacing: '3px', textTransform: 'uppercase', cursor: 'pointer',
+                }}>Create Your First Identity</button>
+              </>
+            )}
           </div>
         )}
 

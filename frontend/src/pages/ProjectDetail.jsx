@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import client from '../api/client'
 import { useToast, ToastContainer } from '../components/Toast'
 
@@ -55,14 +55,23 @@ function SkeletonContent() {
 function ProjectDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { toasts, toast } = useToast()
   const [project, setProject] = useState(null)
   const [analysis, setAnalysis] = useState(null)
   const [brand, setBrand] = useState(null)
   const [competitors, setCompetitors] = useState([])
+  const [feedback, setFeedback] = useState([])
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState('')
-  const [activeTab, setActiveTab] = useState('analysis')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'analysis')
+
+  // Feedback form state
+  const [fbRating, setFbRating] = useState(0)
+  const [fbHover, setFbHover] = useState(0)
+  const [fbComment, setFbComment] = useState('')
+  const [fbSubmitting, setFbSubmitting] = useState(false)
 
   useEffect(() => {
     fetchAll()
@@ -72,16 +81,20 @@ function ProjectDetail() {
     setFetchError('')
     setLoading(true)
     try {
-      const [projectRes, analysisRes, brandRes, competitorsRes] = await Promise.all([
+      const [projectRes, analysisRes, brandRes, competitorsRes, feedbackRes, userRes] = await Promise.all([
         client.get(`/projects/${id}`),
         client.get(`/analysis/${id}`),
         client.get(`/brand/${id}`),
         client.get(`/analysis/${id}/competitors`),
+        client.get(`/feedback/${id}`),
+        client.get('/auth/me'),
       ])
       setProject(projectRes.data)
       setAnalysis(analysisRes.data)
       setBrand(brandRes.data)
       setCompetitors(competitorsRes.data)
+      setFeedback(feedbackRes.data)
+      setUser(userRes.data)
     } catch (err) {
       const status = err.response?.status
       if (status === 401) {
@@ -94,6 +107,27 @@ function ProjectDetail() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault()
+    if (fbRating === 0) return
+    setFbSubmitting(true)
+    try {
+      const res = await client.post('/feedback/', {
+        project_id: parseInt(id),
+        rating: fbRating,
+        comment: fbComment || null,
+      })
+      setFeedback(prev => [...prev, res.data])
+      setFbRating(0)
+      setFbComment('')
+      toast.success('Feedback submitted')
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit feedback')
+    } finally {
+      setFbSubmitting(false)
     }
   }
 
@@ -132,6 +166,7 @@ function ProjectDetail() {
           0%   { background-position: -600px 0; }
           100% { background-position:  600px 0; }
         }
+        textarea::placeholder { color: #475569; }
       `}</style>
 
       <ToastContainer toasts={toasts} />
@@ -397,6 +432,113 @@ function ProjectDetail() {
                 )}
               </div>
             )}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ padding: '0 40px 60px', maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ borderTop: '1px solid rgba(192,132,252,0.08)', paddingTop: '40px' }}>
+              <p style={{
+                color: '#64748B', fontSize: '10px', letterSpacing: '3px',
+                textTransform: 'uppercase', marginBottom: '28px',
+              }}>Feedback</p>
+
+              {/* Existing feedback list */}
+              {feedback.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+                  {feedback.map(f => (
+                    <div key={f.id} style={{
+                      padding: '16px 20px',
+                      border: '1px solid rgba(192,132,252,0.08)',
+                      background: 'rgba(255,255,255,0.01)',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: f.comment ? '10px' : '0' }}>
+                        <div style={{ display: 'flex', gap: '3px' }}>
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <span key={s} style={{ fontSize: '18px', color: s <= f.rating ? '#C084FC' : '#2d1f3d' }}>★</span>
+                          ))}
+                        </div>
+                        <span style={{ color: '#475569', fontSize: '10px', letterSpacing: '1px' }}>
+                          {new Date(f.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {f.comment && (
+                        <p style={{ color: '#94A3B8', fontSize: '13px', lineHeight: '1.6' }}>{f.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Form or already-rated message */}
+              {user && feedback.some(f => f.user_id === user.id) ? (
+                <p style={{ color: '#475569', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                  You have already submitted feedback for this project.
+                </p>
+              ) : (
+                <form onSubmit={handleFeedbackSubmit}>
+                  {/* Star rating */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <p style={{ color: '#64748B', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
+                      Your Rating
+                    </p>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <span
+                          key={s}
+                          onClick={() => setFbRating(s)}
+                          onMouseEnter={() => setFbHover(s)}
+                          onMouseLeave={() => setFbHover(0)}
+                          style={{
+                            fontSize: '32px', cursor: 'pointer',
+                            color: s <= (fbHover || fbRating) ? '#C084FC' : '#2d1f3d',
+                            transition: 'color 0.1s',
+                            userSelect: 'none',
+                          }}
+                        >★</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Comment */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <p style={{ color: '#64748B', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
+                      Comment <span style={{ color: '#334155', textTransform: 'none', letterSpacing: '0' }}>(optional)</span>
+                    </p>
+                    <textarea
+                      value={fbComment}
+                      onChange={e => setFbComment(e.target.value)}
+                      placeholder="Share your thoughts..."
+                      style={{
+                        width: '100%', boxSizing: 'border-box',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(192,132,252,0.15)',
+                        color: '#E2E8F0', padding: '10px 14px',
+                        fontSize: '13px', minHeight: '80px',
+                        resize: 'vertical', outline: 'none',
+                        fontFamily: 'system-ui, sans-serif',
+                      }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(192,132,252,0.45)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(192,132,252,0.15)'}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={fbRating === 0 || fbSubmitting}
+                    style={{
+                      background: 'transparent',
+                      border: `1px solid ${fbRating === 0 ? 'rgba(192,132,252,0.2)' : '#C084FC'}`,
+                      color: fbRating === 0 ? '#475569' : '#C084FC',
+                      padding: '10px 32px', fontSize: '11px',
+                      letterSpacing: '3px', textTransform: 'uppercase',
+                      cursor: fbRating === 0 || fbSubmitting ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {fbSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </>
       )}
