@@ -16,7 +16,8 @@ from schemas.user import (
     LoginRequest,
     Token,
     UserProfileCreate,
-    UserProfileRead
+    UserProfileRead,
+    UserStatsRead
 )
 from core.security import (
     hash_password,
@@ -139,6 +140,39 @@ def get_me(current_user: User = Depends(get_current_user)):
     Protected route — requires JWT token.
     """
     return current_user
+
+
+# ════════════════════════════════════════
+#  GET /auth/profile
+# ════════════════════════════════════════
+@router.get("/profile", response_model=UserProfileRead)
+def get_profile(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """Returns the current user's profile."""
+    profile = session.exec(
+        select(UserProfile).where(UserProfile.user_id == current_user.id)
+    ).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
+
+
+# ════════════════════════════════════════
+#  GET /auth/stats
+# ════════════════════════════════════════
+@router.get("/stats", response_model=UserStatsRead)
+def get_stats(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """Returns stats for the current user."""
+    from models.project import Project
+    projects = session.exec(
+        select(Project).where(Project.user_id == current_user.id)
+    ).all()
+    return {"total_projects": len(projects), "member_since": current_user.created_at}
 
 
 # ════════════════════════════════════════

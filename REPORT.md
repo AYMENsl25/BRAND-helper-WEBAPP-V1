@@ -1,0 +1,1 @@
+1- We have developed the idea of creating a web app that generates a brand identity for a new business starting out or for a business looking to inhance their already existing identity. We started by desiging the frontend page by page before developing it, engineered the prompts specifically to send it, to Claude code for it to implement our vision. 
