@@ -8,7 +8,7 @@
 #   DELETE /projects/{id}     → delete project
 # ─────────────────────────────────────────────────────
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from database import get_session
 from models.project import Project, Tag, ProjectTag
@@ -19,7 +19,7 @@ from schemas.project import (
 )
 from routers.auth import get_current_user
 from models.user import User
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 router = APIRouter()
@@ -31,17 +31,24 @@ router = APIRouter()
 # ════════════════════════════════════════
 @router.get("/", response_model=List[ProjectRead])
 def get_projects(
+    search: Optional[str] = Query(default=None),
+    stage: Optional[str] = Query(default=None),
+    industry: Optional[str] = Query(default=None),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
     Returns all projects belonging to the logged in user.
-    Each user only sees THEIR OWN projects.
+    Supports optional filtering by search (title), stage, and industry.
     """
-    projects = session.exec(
-        select(Project).where(Project.user_id == current_user.id)
-    ).all()
-    return projects
+    query = select(Project).where(Project.user_id == current_user.id)
+    if search:
+        query = query.where(Project.title.ilike(f"%{search}%"))
+    if stage:
+        query = query.where(Project.stage == stage)
+    if industry:
+        query = query.where(Project.industry == industry)
+    return session.exec(query).all()
 
 
 # ════════════════════════════════════════
