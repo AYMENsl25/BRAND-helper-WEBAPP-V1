@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import client from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 function Login() {
   const navigate = useNavigate()
@@ -8,6 +9,12 @@ function Login() {
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' })
   const [touched, setTouched] = useState({ email: false, password: false })
   const [focused, setFocused] = useState({ email: false, password: false })
+  const { login } = useAuth()
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const validate = (name, value) => {
@@ -64,7 +71,9 @@ function Login() {
       form.append('password', formData.password)
       const response = await client.post('/auth/login', form)
       localStorage.setItem('token', response.data.access_token)
+      login(response.data.access_token)
       navigate('/dashboard')
+
     } catch (err) {
       const detail = err.response?.data?.detail || 'Invalid email or password'
       setFieldErrors({ email: detail, password: '' })
