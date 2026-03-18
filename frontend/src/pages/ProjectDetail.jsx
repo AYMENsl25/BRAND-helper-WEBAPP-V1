@@ -66,6 +66,10 @@ function ProjectDetail() {
   const [fbComment, setFbComment] = useState('')
   const [fbSubmitting, setFbSubmitting] = useState(false)
 
+  const handleLogoClick = () => {
+    navigate(localStorage.getItem('token') ? '/dashboard' : '/')
+  }
+
   useEffect(() => {
     fetchAll()
   }, [id])
@@ -129,7 +133,7 @@ function ProjectDetail() {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '20px 40px', borderBottom: '1px solid rgba(192,132,252,0.1)',
     }}>
-      <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+      <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
         <div style={{
           width: '28px', height: '28px', borderRadius: '50%',
           background: 'radial-gradient(circle, #C084FC, #9333EA)',
