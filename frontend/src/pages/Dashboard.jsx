@@ -50,7 +50,6 @@ function Dashboard() {
   const [industries, setIndustries] = useState([])
   const initialized = useRef(false)
 
-  // ← Teammate's fix: smart logo navigation
   const handleLogoClick = () => {
     navigate(localStorage.getItem('token') ? '/dashboard' : '/')
   }
@@ -155,7 +154,6 @@ function Dashboard() {
       borderBottom: '1px solid rgba(192,132,252,0.1)',
       backdropFilter: 'blur(10px)',
     }}>
-      {/* Logo — uses handleLogoClick fix */}
       <div
         onClick={handleLogoClick}
         style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
@@ -168,7 +166,6 @@ function Dashboard() {
         <span style={{ color: '#FFFFFF', fontSize: '18px', fontWeight: '700', letterSpacing: '3px' }}>BELIS</span>
       </div>
 
-      {/* Nav Links */}
       {[
         { label: 'Identity Lab', onClick: () => navigate('/lab') },
         { label: 'Resources', onClick: () => navigate('/resources') },
@@ -454,7 +451,8 @@ function Dashboard() {
                 background: 'transparent',
                 border: '1px solid rgba(192,132,252,0.2)',
                 color: currentPage === 1 ? '#334155' : '#94A3B8',
-                padding: '8px 16px', fontSize: '11px', letterSpacing: '2px',
+                padding: '8px 16px', fontSize: '11px',
+                letterSpacing: '2px',
                 cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
               }}
             >← Prev</button>
@@ -480,7 +478,8 @@ function Dashboard() {
                 background: 'transparent',
                 border: '1px solid rgba(192,132,252,0.2)',
                 color: currentPage === totalPages ? '#334155' : '#94A3B8',
-                padding: '8px 16px', fontSize: '11px', letterSpacing: '2px',
+                padding: '8px 16px', fontSize: '11px',
+                letterSpacing: '2px',
                 cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
               }}
             >Next →</button>
