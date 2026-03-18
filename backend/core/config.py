@@ -29,6 +29,7 @@ class Settings(BaseSettings):
 
     # ── AI ─────────didn't use it yet ─────────
     GEMINI_API_KEY: str = ""
+    HUGGINGFACE_API_KEY: str = ""
 
     # ── App Info ────────────────────────────────
     APP_NAME: str = "BrandForge"
