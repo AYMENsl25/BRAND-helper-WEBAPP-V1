@@ -48,6 +48,10 @@ function Dashboard() {
   const [industries, setIndustries] = useState([])
   const initialized = useRef(false)
 
+  const handleLogoClick = () => {
+    navigate(localStorage.getItem('token') ? '/dashboard' : '/')
+  }
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
@@ -149,29 +153,38 @@ function Dashboard() {
         <span style={{ color: '#FFFFFF', fontSize: '18px', fontWeight: '700', letterSpacing: '3px' }}>BELIS</span>
       </div>
 
-      {[
-        { label: 'Identity Lab', onClick: () => navigate('/lab') },
-        { label: 'Resources', onClick: () => navigate('/resources') },
-        {
-          label: 'Kit Maker',
-          onClick: () => projects.length > 0
-            ? navigate(`/project/${projects[0].id}?tab=brand`)
-            : navigate('/lab'),
-        },
-        {
-          label: 'Market Intelligence',
-          onClick: () => projects.length > 0
-            ? navigate(`/project/${projects[0].id}?tab=market`)
-            : navigate('/lab'),
-        },
-      ].map(item => (
-        <span key={item.label} onClick={item.onClick} style={{
-          color: '#94A3B8', fontSize: '14px', cursor: 'pointer', letterSpacing: '1px', transition: 'color 0.3s',
-        }}
-          onMouseEnter={e => e.target.style.color = '#C084FC'}
-          onMouseLeave={e => e.target.style.color = '#94A3B8'}
-        >{item.label}</span>
-      ))}
+      {/* Navigation */}
+      <nav style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '20px 40px',
+        borderBottom: '1px solid rgba(192,132,252,0.1)',
+        backdropFilter: 'blur(10px)',
+      }}>
+        {/* Logo */}
+        <div
+          onClick={handleLogoClick}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            cursor: 'pointer',
+          }}>
+          <div style={{
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #C084FC, #9333EA)',
+            boxShadow: '0 0 15px rgba(192,132,252,0.5)',
+          }} />
+          <span style={{
+            color: '#FFFFFF',
+            fontSize: '18px',
+            fontWeight: '700',
+            letterSpacing: '3px',
+          }}>BELIS</span>
+        </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         {user && (
