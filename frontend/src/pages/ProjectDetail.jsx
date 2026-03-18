@@ -17,16 +17,11 @@ function SkeletonBlock({ width = '100%', height = '16px', style = {} }) {
 function SkeletonContent() {
   return (
     <div style={{ padding: '48px 40px 0', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Stage badge */}
       <SkeletonBlock width="90px" height="24px" style={{ marginBottom: '20px' }} />
-      {/* Title */}
       <SkeletonBlock width="55%" height="40px" style={{ marginBottom: '16px' }} />
-      {/* Description */}
       <SkeletonBlock width="70%" height="14px" style={{ marginBottom: '8px' }} />
       <SkeletonBlock width="50%" height="14px" style={{ marginBottom: '32px' }} />
-      {/* Viability score */}
       <SkeletonBlock width="220px" height="52px" style={{ marginBottom: '40px' }} />
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid rgba(192,132,252,0.1)', paddingBottom: '0' }}>
         {[80, 60, 110, 100].map((w, i) => (
           <div key={i} style={{ padding: '12px 24px' }}>
@@ -34,7 +29,6 @@ function SkeletonContent() {
           </div>
         ))}
       </div>
-      {/* Content blocks */}
       <div style={{ paddingTop: '40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         {[1, 2, 3, 4].map(i => (
           <div key={i} style={{
@@ -67,7 +61,6 @@ function ProjectDetail() {
   const [fetchError, setFetchError] = useState('')
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'analysis')
 
-  // Feedback form state
   const [fbRating, setFbRating] = useState(0)
   const [fbHover, setFbHover] = useState(0)
   const [fbComment, setFbComment] = useState('')
@@ -172,24 +165,17 @@ function ProjectDetail() {
       <ToastContainer toasts={toasts} />
       <Nav />
 
-      {/* Skeleton state */}
       {loading && <SkeletonContent />}
 
-      {/* Error state */}
       {!loading && fetchError && (
-        <div style={{
-          maxWidth: '1200px', margin: '0 auto',
-          padding: '80px 40px', textAlign: 'center',
-        }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '80px 40px', textAlign: 'center' }}>
           <div style={{
             border: '1px solid rgba(255,100,100,0.15)',
-            background: 'rgba(255,100,100,0.03)',
-            padding: '60px 40px',
+            background: 'rgba(255,100,100,0.03)', padding: '60px 40px',
           }}>
-            <p style={{
-              color: '#ff6b6b', fontSize: '12px', letterSpacing: '3px',
-              textTransform: 'uppercase', marginBottom: '12px',
-            }}>Something went wrong</p>
+            <p style={{ color: '#ff6b6b', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Something went wrong
+            </p>
             <p style={{ color: '#94A3B8', fontSize: '14px', marginBottom: '32px' }}>{fetchError}</p>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
               <button onClick={fetchAll} style={{
@@ -207,10 +193,8 @@ function ProjectDetail() {
         </div>
       )}
 
-      {/* Loaded state */}
       {!loading && !fetchError && project && (
         <>
-          {/* Project Header */}
           <div style={{ padding: '48px 40px 0', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{
               display: 'inline-block', background: 'rgba(192,132,252,0.1)',
@@ -245,7 +229,6 @@ function ProjectDetail() {
               </div>
             )}
 
-            {/* Tabs */}
             <div style={{ display: 'flex', borderBottom: '1px solid rgba(192,132,252,0.1)' }}>
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
@@ -259,7 +242,6 @@ function ProjectDetail() {
             </div>
           </div>
 
-          {/* Tab Content */}
           <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
 
             {/* ANALYSIS TAB */}
@@ -291,7 +273,7 @@ function ProjectDetail() {
                   </div>
                 </div>
               ) : (
-                <p style={{ color: '#94A3B8', fontSize: '13px', letterSpacing: '1px' }}>Analysis data not available.</p>
+                <p style={{ color: '#94A3B8', fontSize: '13px' }}>Analysis data not available.</p>
               )
             )}
 
@@ -312,14 +294,15 @@ function ProjectDetail() {
                         textTransform: 'uppercase', marginBottom: '16px',
                       }}>{item.label}</p>
                       <p style={{
-                        color: '#C084FC', fontSize: item.large ? '28px' : '20px',
+                        color: '#C084FC',
+                        fontSize: item.large ? '28px' : '20px',
                         fontWeight: '200', letterSpacing: '2px',
                       }}>{item.value}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p style={{ color: '#94A3B8', fontSize: '13px', letterSpacing: '1px' }}>Market data not available.</p>
+                <p style={{ color: '#94A3B8', fontSize: '13px' }}>Market data not available.</p>
               )
             )}
 
@@ -327,6 +310,8 @@ function ProjectDetail() {
             {activeTab === 'brand' && (
               brand ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+                  {/* Tagline, Voice, Personality */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                     {[
                       { label: 'Tagline', value: brand.tagline },
@@ -341,11 +326,14 @@ function ProjectDetail() {
                           color: '#94A3B8', fontSize: '10px', letterSpacing: '3px',
                           textTransform: 'uppercase', marginBottom: '12px',
                         }}>{item.label}</p>
-                        <p style={{ color: '#FFFFFF', fontSize: '14px', lineHeight: '1.6', letterSpacing: '1px' }}>{item.value}</p>
+                        <p style={{ color: '#FFFFFF', fontSize: '14px', lineHeight: '1.6', letterSpacing: '1px' }}>
+                          {item.value}
+                        </p>
                       </div>
                     ))}
                   </div>
 
+                  {/* Mission Statement */}
                   {brand.mission_statement && (
                     <div style={{
                       padding: '24px', border: '1px solid rgba(192,132,252,0.1)',
@@ -361,6 +349,7 @@ function ProjectDetail() {
                     </div>
                   )}
 
+                  {/* Color Palette */}
                   {brand.color_palette && (
                     <div style={{
                       padding: '24px', border: '1px solid rgba(192,132,252,0.1)',
@@ -372,9 +361,9 @@ function ProjectDetail() {
                       }}>Color Palette — {brand.color_palette.palette_name}</p>
                       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                         {[
-                          { label: 'Primary',    hex: brand.color_palette.primary_hex },
-                          { label: 'Secondary',  hex: brand.color_palette.secondary_hex },
-                          { label: 'Accent',     hex: brand.color_palette.accent_hex },
+                          { label: 'Primary', hex: brand.color_palette.primary_hex },
+                          { label: 'Secondary', hex: brand.color_palette.secondary_hex },
+                          { label: 'Accent', hex: brand.color_palette.accent_hex },
                           { label: 'Background', hex: brand.color_palette.background_hex },
                         ].map(color => (
                           <div key={color.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -392,9 +381,76 @@ function ProjectDetail() {
                       </div>
                     </div>
                   )}
+
+                  {/* Generated Logo */}
+                  {brand.logo_prompts && brand.logo_prompts.length > 0 && (
+                    <div style={{
+                      padding: '24px', border: '1px solid rgba(192,132,252,0.1)',
+                      background: 'rgba(255,255,255,0.02)',
+                    }}>
+                      <p style={{
+                        color: '#94A3B8', fontSize: '10px', letterSpacing: '3px',
+                        textTransform: 'uppercase', marginBottom: '20px',
+                      }}>Generated Logo</p>
+
+                      {brand.logo_prompts[0].image_url ? (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '32px', flexWrap: 'wrap' }}>
+                          <img
+                            src={brand.logo_prompts[0].image_url}
+                            alt="Generated Logo"
+                            style={{
+                              width: '200px', height: '200px',
+                              objectFit: 'contain',
+                              border: '1px solid rgba(192,132,252,0.2)',
+                              background: '#ffffff', padding: '16px',
+                            }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <p style={{
+                              color: '#64748B', fontSize: '10px', letterSpacing: '2px',
+                              textTransform: 'uppercase', marginBottom: '8px',
+                            }}>Logo Prompt</p>
+                            <p style={{
+                              color: '#94A3B8', fontSize: '12px', lineHeight: '1.7',
+                              marginBottom: '20px', maxWidth: '400px',
+                            }}>{brand.logo_prompts[0].prompt_text}</p>
+                            <a
+                              href={brand.logo_prompts[0].image_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                color: '#C084FC', fontSize: '11px',
+                                letterSpacing: '2px', textTransform: 'uppercase',
+                                textDecoration: 'none',
+                                border: '1px solid rgba(192,132,252,0.3)',
+                                padding: '8px 20px', display: 'inline-block',
+                              }}
+                              onMouseEnter={e => e.target.style.borderColor = '#C084FC'}
+                              onMouseLeave={e => e.target.style.borderColor = 'rgba(192,132,252,0.3)'}
+                            >Download Logo &#8599;</a>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <p style={{
+                            color: '#64748B', fontSize: '10px', letterSpacing: '2px',
+                            textTransform: 'uppercase', marginBottom: '8px',
+                          }}>Logo Prompt</p>
+                          <p style={{
+                            color: '#94A3B8', fontSize: '12px',
+                            lineHeight: '1.7', marginBottom: '16px',
+                          }}>{brand.logo_prompts[0].prompt_text}</p>
+                          <p style={{ color: '#475569', fontSize: '11px', letterSpacing: '1px' }}>
+                            Logo image generation in progress...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                 </div>
               ) : (
-                <p style={{ color: '#94A3B8', fontSize: '13px', letterSpacing: '1px' }}>Brand data not available.</p>
+                <p style={{ color: '#94A3B8', fontSize: '13px' }}>Brand data not available.</p>
               )
             )}
 
@@ -442,7 +498,6 @@ function ProjectDetail() {
                 textTransform: 'uppercase', marginBottom: '28px',
               }}>Feedback</p>
 
-              {/* Existing feedback list */}
               {feedback.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
                   {feedback.map(f => (
@@ -451,7 +506,10 @@ function ProjectDetail() {
                       border: '1px solid rgba(192,132,252,0.08)',
                       background: 'rgba(255,255,255,0.01)',
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: f.comment ? '10px' : '0' }}>
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between',
+                        alignItems: 'center', marginBottom: f.comment ? '10px' : '0',
+                      }}>
                         <div style={{ display: 'flex', gap: '3px' }}>
                           {[1, 2, 3, 4, 5].map(s => (
                             <span key={s} style={{ fontSize: '18px', color: s <= f.rating ? '#C084FC' : '#2d1f3d' }}>★</span>
@@ -469,18 +527,17 @@ function ProjectDetail() {
                 </div>
               )}
 
-              {/* Form or already-rated message */}
               {user && feedback.some(f => f.user_id === user.id) ? (
                 <p style={{ color: '#475569', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' }}>
                   You have already submitted feedback for this project.
                 </p>
               ) : (
                 <form onSubmit={handleFeedbackSubmit}>
-                  {/* Star rating */}
                   <div style={{ marginBottom: '20px' }}>
-                    <p style={{ color: '#64748B', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
-                      Your Rating
-                    </p>
+                    <p style={{
+                      color: '#64748B', fontSize: '10px', letterSpacing: '2px',
+                      textTransform: 'uppercase', marginBottom: '12px',
+                    }}>Your Rating</p>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       {[1, 2, 3, 4, 5].map(s => (
                         <span
@@ -491,19 +548,18 @@ function ProjectDetail() {
                           style={{
                             fontSize: '32px', cursor: 'pointer',
                             color: s <= (fbHover || fbRating) ? '#C084FC' : '#2d1f3d',
-                            transition: 'color 0.1s',
-                            userSelect: 'none',
+                            transition: 'color 0.1s', userSelect: 'none',
                           }}
                         >★</span>
                       ))}
                     </div>
                   </div>
 
-                  {/* Comment */}
                   <div style={{ marginBottom: '20px' }}>
-                    <p style={{ color: '#64748B', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
-                      Comment <span style={{ color: '#334155', textTransform: 'none', letterSpacing: '0' }}>(optional)</span>
-                    </p>
+                    <p style={{
+                      color: '#64748B', fontSize: '10px', letterSpacing: '2px',
+                      textTransform: 'uppercase', marginBottom: '12px',
+                    }}>Comment <span style={{ color: '#334155', textTransform: 'none', letterSpacing: '0' }}>(optional)</span></p>
                     <textarea
                       value={fbComment}
                       onChange={e => setFbComment(e.target.value)}
