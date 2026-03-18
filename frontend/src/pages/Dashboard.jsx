@@ -153,39 +153,6 @@ function Dashboard() {
         <span style={{ color: '#FFFFFF', fontSize: '18px', fontWeight: '700', letterSpacing: '3px' }}>BELIS</span>
       </div>
 
-      {/* Navigation */}
-      <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '20px 40px',
-        borderBottom: '1px solid rgba(192,132,252,0.1)',
-        backdropFilter: 'blur(10px)',
-      }}>
-        {/* Logo */}
-        <div
-          onClick={handleLogoClick}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            cursor: 'pointer',
-          }}>
-          <div style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, #C084FC, #9333EA)',
-            boxShadow: '0 0 15px rgba(192,132,252,0.5)',
-          }} />
-          <span style={{
-            color: '#FFFFFF',
-            fontSize: '18px',
-            fontWeight: '700',
-            letterSpacing: '3px',
-          }}>BELIS</span>
-        </div>
-
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         {user && (
           <span
