@@ -154,7 +154,7 @@ function Dashboard() {
       borderBottom: '1px solid rgba(192,132,252,0.1)',
       backdropFilter: 'blur(10px)',
     }}>
-      <div
+<div
         onClick={handleLogoClick}
         style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
       >
