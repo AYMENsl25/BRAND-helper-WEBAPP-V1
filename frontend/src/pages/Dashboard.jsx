@@ -40,8 +40,10 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [totalPages, setTotalPages] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalProjects, setTotalProjects] = useState(0)
 
-  // Filter state
   const [search, setSearch] = useState('')
   const [activeStage, setActiveStage] = useState('')
   const [activeIndustry, setActiveIndustry] = useState('')
@@ -61,11 +63,10 @@ function Dashboard() {
     fetchData()
   }, [])
 
-  // Re-fetch when filters change (debounce search)
   useEffect(() => {
     if (!initialized.current) return
     const timer = setTimeout(() => {
-      fetchProjects({ search, stage: activeStage, industry: activeIndustry })
+      fetchProjects({ search, stage: activeStage, industry: activeIndustry }, 1)
     }, search ? 300 : 0)
     return () => clearTimeout(timer)
   }, [search, activeStage, activeIndustry])
@@ -76,11 +77,14 @@ function Dashboard() {
     try {
       const [userRes, projectsRes] = await Promise.all([
         client.get('/auth/me'),
-        client.get('/projects/'),
+        client.get('/projects/?page=1&limit=10'),
       ])
       setUser(userRes.data)
-      setProjects(projectsRes.data)
-      setIndustries([...new Set(projectsRes.data.map(p => p.industry).filter(Boolean))])
+      setProjects(projectsRes.data.projects || projectsRes.data)
+      setTotalPages(projectsRes.data.pages || 1)
+      setTotalProjects(projectsRes.data.total || 0)
+      setCurrentPage(1)
+      setIndustries([...new Set((projectsRes.data.projects || projectsRes.data).map(p => p.industry).filter(Boolean))])
       initialized.current = true
     } catch (err) {
       const status = err.response?.status
@@ -95,7 +99,7 @@ function Dashboard() {
     }
   }
 
-  const fetchProjects = async (filters = {}) => {
+  const fetchProjects = async (filters = {}, page = 1) => {
     setFetchError('')
     setLoading(true)
     try {
@@ -103,8 +107,14 @@ function Dashboard() {
       if (filters.search) params.set('search', filters.search)
       if (filters.stage) params.set('stage', filters.stage)
       if (filters.industry) params.set('industry', filters.industry)
+      params.set('page', page)
+      params.set('limit', 10)
       const res = await client.get(`/projects/?${params}`)
-      setProjects(res.data)
+      setProjects(res.data.projects || res.data)
+      setTotalPages(res.data.pages || 1)
+      setTotalProjects(res.data.total || 0)
+      setCurrentPage(res.data.page || page)
+      setIndustries([...new Set((res.data.projects || res.data).map(p => p.industry).filter(Boolean))])
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem('token')
@@ -144,7 +154,10 @@ function Dashboard() {
       borderBottom: '1px solid rgba(192,132,252,0.1)',
       backdropFilter: 'blur(10px)',
     }}>
-      <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+<div
+        onClick={handleLogoClick}
+        style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+      >
         <div style={{
           width: '28px', height: '28px', borderRadius: '50%',
           background: 'radial-gradient(circle, #C084FC, #9333EA)',
@@ -152,6 +165,30 @@ function Dashboard() {
         }} />
         <span style={{ color: '#FFFFFF', fontSize: '18px', fontWeight: '700', letterSpacing: '3px' }}>BELIS</span>
       </div>
+
+      {[
+        { label: 'Identity Lab', onClick: () => navigate('/lab') },
+        { label: 'Resources', onClick: () => navigate('/resources') },
+        {
+          label: 'Kit Maker',
+          onClick: () => projects.length > 0
+            ? navigate(`/project/${projects[0].id}?tab=brand`)
+            : navigate('/lab'),
+        },
+        {
+          label: 'Market Intelligence',
+          onClick: () => projects.length > 0
+            ? navigate(`/project/${projects[0].id}?tab=market`)
+            : navigate('/lab'),
+        },
+      ].map(item => (
+        <span key={item.label} onClick={item.onClick} style={{
+          color: '#94A3B8', fontSize: '14px', cursor: 'pointer', letterSpacing: '1px', transition: 'color 0.3s',
+        }}
+          onMouseEnter={e => e.target.style.color = '#C084FC'}
+          onMouseLeave={e => e.target.style.color = '#94A3B8'}
+        >{item.label}</span>
+      ))}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         {user && (
@@ -197,7 +234,7 @@ function Dashboard() {
               letterSpacing: '6px', textTransform: 'uppercase', marginBottom: '8px',
             }}>Your Projects</h1>
             <p style={{ color: '#94A3B8', fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-              {loading ? 'Loading...' : `${projects.length} ideas in your vault`}
+              {loading ? 'Loading...' : `${totalProjects} ideas in your vault`}
             </p>
           </div>
           <button onClick={() => navigate('/lab')} style={{
@@ -213,7 +250,6 @@ function Dashboard() {
 
         {/* Search & Filters */}
         <div style={{ marginBottom: '32px' }}>
-          {/* Search bar */}
           <input
             type="text"
             placeholder="Search projects..."
@@ -231,7 +267,6 @@ function Dashboard() {
             onBlur={e => e.target.style.borderColor = 'rgba(192,132,252,0.15)'}
           />
 
-          {/* Stage filters */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: industries.length > 0 ? '10px' : '0' }}>
             {['', ...STAGES].map(s => {
               const active = activeStage === s
@@ -247,7 +282,6 @@ function Dashboard() {
             })}
           </div>
 
-          {/* Industry filters (dynamic) */}
           {industries.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {['', ...industries].map(ind => {
@@ -282,10 +316,9 @@ function Dashboard() {
             border: '1px solid rgba(255,100,100,0.15)',
             background: 'rgba(255,100,100,0.03)',
           }}>
-            <p style={{
-              color: '#ff6b6b', fontSize: '12px', letterSpacing: '3px',
-              textTransform: 'uppercase', marginBottom: '8px',
-            }}>Failed to load</p>
+            <p style={{ color: '#ff6b6b', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Failed to load
+            </p>
             <p style={{ color: '#94A3B8', fontSize: '13px', marginBottom: '28px' }}>{fetchError}</p>
             <button onClick={fetchData} style={{
               background: 'transparent', border: '1px solid rgba(192,132,252,0.4)',
@@ -309,10 +342,9 @@ function Dashboard() {
             }}>✦</div>
             {(search || activeStage || activeIndustry) ? (
               <>
-                <p style={{
-                  color: '#94A3B8', fontSize: '12px', letterSpacing: '3px',
-                  textTransform: 'uppercase', marginBottom: '24px',
-                }}>No projects match your filters</p>
+                <p style={{ color: '#94A3B8', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px' }}>
+                  No projects match your filters
+                </p>
                 <button onClick={() => { setSearch(''); setActiveStage(''); setActiveIndustry('') }} style={{
                   background: 'transparent', border: '1px solid rgba(192,132,252,0.3)',
                   color: '#94A3B8', padding: '10px 28px', fontSize: '11px',
@@ -321,10 +353,9 @@ function Dashboard() {
               </>
             ) : (
               <>
-                <p style={{
-                  color: '#94A3B8', fontSize: '12px', letterSpacing: '3px',
-                  textTransform: 'uppercase', marginBottom: '24px',
-                }}>No projects yet</p>
+                <p style={{ color: '#94A3B8', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px' }}>
+                  No projects yet
+                </p>
                 <button onClick={() => navigate('/lab')} style={{
                   background: 'transparent', border: '1px solid #C084FC',
                   color: '#C084FC', padding: '12px 32px', fontSize: '12px',
@@ -406,6 +437,55 @@ function Dashboard() {
             ))}
           </div>
         )}
+
+        {/* Pagination */}
+        {!loading && !fetchError && totalPages > 1 && (
+          <div style={{
+            display: 'flex', justifyContent: 'center',
+            alignItems: 'center', gap: '8px', marginTop: '40px',
+          }}>
+            <button
+              onClick={() => fetchProjects({ search, stage: activeStage, industry: activeIndustry }, currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(192,132,252,0.2)',
+                color: currentPage === 1 ? '#334155' : '#94A3B8',
+                padding: '8px 16px', fontSize: '11px',
+                letterSpacing: '2px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              }}
+            >← Prev</button>
+
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => fetchProjects({ search, stage: activeStage, industry: activeIndustry }, i + 1)}
+                style={{
+                  background: currentPage === i + 1 ? 'rgba(192,132,252,0.15)' : 'transparent',
+                  border: `1px solid ${currentPage === i + 1 ? '#C084FC' : 'rgba(192,132,252,0.2)'}`,
+                  color: currentPage === i + 1 ? '#C084FC' : '#94A3B8',
+                  padding: '8px 14px', fontSize: '11px',
+                  letterSpacing: '2px', cursor: 'pointer',
+                }}
+              >{i + 1}</button>
+            ))}
+
+            <button
+              onClick={() => fetchProjects({ search, stage: activeStage, industry: activeIndustry }, currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(192,132,252,0.2)',
+                color: currentPage === totalPages ? '#334155' : '#94A3B8',
+                padding: '8px 16px', fontSize: '11px',
+                letterSpacing: '2px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              }}
+            >Next →</button>
+          </div>
+        )}
+
       </div>
     </div>
   )

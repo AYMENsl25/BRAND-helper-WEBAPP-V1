@@ -29,18 +29,16 @@ router = APIRouter()
 #  GET /projects
 #  Get all projects for current user
 # ════════════════════════════════════════
-@router.get("/", response_model=List[ProjectRead])
+@router.get("/", response_model=dict)
 def get_projects(
     search: Optional[str] = Query(default=None),
     stage: Optional[str] = Query(default=None),
     industry: Optional[str] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1, le=50),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """
-    Returns all projects belonging to the logged in user.
-    Supports optional filtering by search (title), stage, and industry.
-    """
     query = select(Project).where(Project.user_id == current_user.id)
     if search:
         query = query.where(Project.title.ilike(f"%{search}%"))
@@ -48,8 +46,19 @@ def get_projects(
         query = query.where(Project.stage == stage)
     if industry:
         query = query.where(Project.industry == industry)
-    return session.exec(query).all()
 
+    total = len(session.exec(query).all())
+    offset = (page - 1) * limit
+    query = query.offset(offset).limit(limit)
+    projects = session.exec(query).all()
+
+    return {
+        "projects": projects,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": (total + limit - 1) // limit
+    }
 
 # ════════════════════════════════════════
 #  POST /projects
