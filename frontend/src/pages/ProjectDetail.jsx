@@ -177,6 +177,16 @@ function sanitizeFileName(value) {
     .slice(0, 80)
 }
 
+function getContrastColor(hex) {
+  const normalized = normalizeHexColor(hex) || '#000000'
+  const raw = normalized.replace('#', '')
+  const r = parseInt(raw.slice(0, 2), 16)
+  const g = parseInt(raw.slice(2, 4), 16)
+  const b = parseInt(raw.slice(4, 6), 16)
+  const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000
+  return brightness < 128 ? [255, 255, 255] : [0, 0, 0]
+}
+
 function ProjectDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -371,13 +381,17 @@ function ProjectDetail() {
       const logoPng = await svgToPngDataUrl(logoSvgString || buildFallbackSvg(project.title, kitColors), 1400)
 
       const drawPageChrome = (title) => {
+        const barTextColor = getContrastColor(primaryColor)
         doc.setFillColor(primaryColor)
         doc.rect(0, 0, pageWidth, headerHeight, 'F')
         doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F')
-        doc.setTextColor('#FFFFFF')
+        doc.setTextColor(...barTextColor)
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(18)
         doc.text(title, safeLeft, 30)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(10)
+        doc.text(`${project.title} Brand System`, safeRight - 118, pageHeight - 10)
       }
 
       drawPageChrome(`${project.title} Brand Kit`)
@@ -393,12 +407,13 @@ function ProjectDetail() {
         const x = safeLeft + (index * 98)
         doc.setFillColor(color)
         doc.roundedRect(x, swatchTop, 72, 72, 8, 8, 'F')
-        doc.setTextColor('#111827')
+        doc.setTextColor(...getContrastColor(color))
         doc.setFont('courier', 'normal')
         doc.setFontSize(10)
-        doc.text(color, x, swatchTop + 90)
+        doc.text(color, x + 8, swatchTop + 44, { baseline: 'middle' })
       })
 
+      doc.setTextColor(0, 0, 0)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(18)
       doc.text('Typography', safeLeft, swatchTop + 138)
@@ -423,12 +438,14 @@ function ProjectDetail() {
       const cardsY = 190
       const frontX = safeLeft
       const backX = safeLeft + cardW + gap
+      const frontTextColor = getContrastColor(primaryColor)
+      const backTextColor = getContrastColor(primaryColor)
 
       doc.setFillColor(primaryColor)
       doc.roundedRect(frontX, cardsY, cardW, cardH, 12, 12, 'F')
       doc.setFillColor(secondaryColor)
       doc.rect(frontX + 18, cardsY + 18, 5, cardH - 36, 'F')
-      doc.setTextColor('#FFFFFF')
+      doc.setTextColor(...frontTextColor)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(22)
       doc.text(project.title, frontX + 34, cardsY + 34)
@@ -447,6 +464,10 @@ function ProjectDetail() {
       doc.setDrawColor(accentColor)
       doc.setLineWidth(2)
       doc.line(backX + 24, cardsY + cardH - 24, backX + cardW - 24, cardsY + cardH - 24)
+      doc.setTextColor(...backTextColor)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text(project.title.toUpperCase(), backX + 24, cardsY + cardH - 32)
 
       doc.setTextColor('#111827')
       doc.setFont('helvetica', 'bold')
@@ -461,19 +482,24 @@ function ProjectDetail() {
       const sheetY = 96
       const sheetW = pageWidth - (safeLeft * 2)
       const sheetH = bodyBottom - sheetY
+      const headerTextColor = getContrastColor(primaryColor)
+      const footerTextColor = getContrastColor(accentColor)
       doc.setFillColor(backgroundColor)
       doc.rect(sheetX, sheetY, sheetW, sheetH, 'F')
       doc.setFillColor(primaryColor)
       doc.rect(sheetX, sheetY, sheetW, 74, 'F')
       doc.addImage(logoPng, 'PNG', sheetX + 24, sheetY + 14, 44, 44)
-      doc.setTextColor('#FFFFFF')
+      doc.setTextColor(...headerTextColor)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(24)
       doc.text(project.title, sheetX + 82, sheetY + 42)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      doc.text('hello@brand.com  |  +1 (555) 240-1188', sheetX + sheetW - 180, sheetY + 42)
       doc.setDrawColor(secondaryColor)
       doc.setLineWidth(3)
       doc.line(sheetX + 24, sheetY + 102, sheetX + sheetW - 24, sheetY + 102)
-      doc.setTextColor('#111827')
+      doc.setTextColor(0, 0, 0)
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(12)
       doc.text(['123 Creative Avenue', 'Istanbul, TR 34000', 'hello@brand.com', '+1 (555) 240-1188'], sheetX + 24, sheetY + 132)
@@ -486,6 +512,10 @@ function ProjectDetail() {
       })
       doc.setFillColor(accentColor)
       doc.rect(sheetX, sheetY + sheetH - 42, sheetW, 42, 'F')
+      doc.setTextColor(...footerTextColor)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      doc.text(`${project.title}  |  Confidential Brand Kit`, sheetX + 24, sheetY + sheetH - 17)
 
       doc.save(`${sanitizeFileName(project.title)}-Brand-Kit.pdf`)
       toast.success('Brand kit PDF downloaded')
