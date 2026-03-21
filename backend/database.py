@@ -12,6 +12,8 @@
 #               Like one phone call — open, talk, close
 # ─────────────────────────────────────────────────────
 
+from unittest import result
+
 from sqlmodel import SQLModel, create_engine, Session
 from sqlalchemy import text
 from core.config import settings
@@ -48,10 +50,17 @@ def create_db_and_tables():
     # so we do it manually here. The IF NOT EXISTS check
     # makes it safe to run on every server restart.
     with engine.connect() as conn:
-        conn.execute(text(
-            "ALTER TABLE projects "
-            "ADD COLUMN IF NOT EXISTS is_favourite BOOLEAN NOT NULL DEFAULT FALSE"
-        ))
+        result = conn.execute(text(
+    "SELECT COUNT(*) FROM information_schema.columns "
+    "WHERE table_schema = DATABASE() "
+    "AND table_name = 'projects' "
+    "AND column_name = 'is_favourite'"
+))
+        if result.scalar() == 0:
+            conn.execute(text(
+             "ALTER TABLE projects "
+             "ADD COLUMN is_favourite BOOLEAN NOT NULL DEFAULT FALSE"
+    ))
         conn.commit()
 
     print("✅ Database connected and tables verified!")
