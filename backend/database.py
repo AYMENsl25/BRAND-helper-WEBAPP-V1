@@ -13,6 +13,7 @@
 # ─────────────────────────────────────────────────────
 
 from sqlmodel import SQLModel, create_engine, Session
+from sqlalchemy import text
 from core.config import settings
 
 
@@ -41,6 +42,18 @@ def create_db_and_tables():
     import models.brand_asset
 
     SQLModel.metadata.create_all(engine)
+
+    # ── Safe column migrations ────────────────────────
+    # create_all() won't add columns to existing tables,
+    # so we do it manually here. The IF NOT EXISTS check
+    # makes it safe to run on every server restart.
+    with engine.connect() as conn:
+        conn.execute(text(
+            "ALTER TABLE projects "
+            "ADD COLUMN IF NOT EXISTS is_favourite BOOLEAN NOT NULL DEFAULT FALSE"
+        ))
+        conn.commit()
+
     print("✅ Database connected and tables verified!")
 
 
