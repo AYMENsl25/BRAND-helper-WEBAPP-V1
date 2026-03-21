@@ -36,6 +36,7 @@ function Lab() {
   const [loading, setLoading] = useState(false)
   const [loadingStep, setLoadingStep] = useState(0)
   const [error, setError] = useState('')
+  const [otherIndustry, setOtherIndustry] = useState('')
 
   const handleLogoClick = () => {
     navigate(localStorage.getItem('token') ? '/dashboard' : '/')
@@ -64,10 +65,13 @@ function Lab() {
     setError('')
     setLoadingStep(0)
     try {
+      // Create project
+      const industryValue = formData.industry === 'Other' ? otherIndustry.trim() : formData.industry
+
       const projectRes = await client.post('/projects/', {
         title: formData.title,
         description: formData.description,
-        industry: formData.industry,
+        industry: industryValue,
         stage: formData.stage,
       })
       const projectId = projectRes.data.id
@@ -91,7 +95,7 @@ function Lab() {
   const canProceed = () => {
     if (step === 1) return formData.description.length > 20
     if (step === 2) return formData.personality !== ''
-    if (step === 3) return formData.industry !== ''
+    if (step === 3) return formData.industry !== '' && (formData.industry !== 'Other' || otherIndustry.trim().length > 0)
     if (step === 4) return formData.stage !== ''
     if (step === 5) return formData.title.length > 2
     return true
@@ -324,13 +328,19 @@ function Lab() {
               onFocus={e => e.target.style.borderColor = '#C084FC'}
               onBlur={e => e.target.style.borderColor = 'rgba(192,132,252,0.2)'}
             />
-            <p style={{
-              color: formData.description.length > 20 ? '#9333EA' : '#94A3B8',
-              fontSize: '11px',
-              letterSpacing: '2px',
-              marginTop: '8px',
-              textAlign: 'right',
-            }}>{formData.description.length} characters</p>
+            <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {formData.description.length > 0 && formData.description.length <= 20 ? (
+                <p style={{ color: '#ff6b6b', fontSize: '11px', letterSpacing: '1px', margin: 0 }}>
+                  Minimum 21 characters required
+                </p>
+              ) : <span />}
+              <p style={{
+                color: formData.description.length > 20 ? '#9333EA' : '#94A3B8',
+                fontSize: '11px',
+                letterSpacing: '2px',
+                margin: 0,
+              }}>{formData.description.length} characters</p>
+            </div>
           </div>
         )}
 
@@ -444,6 +454,27 @@ function Lab() {
                 >{ind}</div>
               ))}
             </div>
+            {formData.industry === 'Other' && (
+              <input
+                autoFocus
+                type="text"
+                value={otherIndustry}
+                onChange={e => setOtherIndustry(e.target.value)}
+                placeholder="Enter your industry..."
+                style={{
+                  marginTop: '24px',
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid #C084FC',
+                  color: '#FFFFFF',
+                  padding: '14px 20px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  letterSpacing: '1px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -566,7 +597,7 @@ function Lab() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[
                   { label: 'Personality', value: formData.personality },
-                  { label: 'Industry', value: formData.industry },
+                  { label: 'Industry', value: formData.industry === 'Other' ? otherIndustry : formData.industry },
                   { label: 'Stage', value: formData.stage },
                 ].map(item => (
                   <div key={item.label} style={{

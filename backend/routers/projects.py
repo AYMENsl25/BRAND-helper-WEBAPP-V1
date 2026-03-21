@@ -193,6 +193,30 @@ def delete_project(
 
 
 # ════════════════════════════════════════
+#  PATCH /projects/{project_id}/favourite
+#  Toggle favourite status
+# ════════════════════════════════════════
+@router.patch("/{project_id}/favourite", response_model=ProjectRead)
+def toggle_favourite(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    project = session.get(Project, project_id)
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if project.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    project.is_favourite = not project.is_favourite
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return project
+
+
+# ════════════════════════════════════════
 #  POST /projects/{project_id}/tags
 #  Add a tag to a project
 # ════════════════════════════════════════

@@ -40,10 +40,11 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
   const [totalPages, setTotalPages] = useState(1)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalProjects, setTotalProjects] = useState(0)
-
   const [search, setSearch] = useState('')
   const [activeStage, setActiveStage] = useState('')
   const [activeIndustry, setActiveIndustry] = useState('')
@@ -132,14 +133,29 @@ function Dashboard() {
     navigate('/')
   }
 
+  const handleToggleFavourite = async (projectId) => {
+    try {
+      const res = await client.patch(`/projects/${projectId}/favourite`)
+      setProjects(projects.map(p =>
+        p.id === projectId ? { ...p, is_favourite: res.data.is_favourite } : p
+      ))
+    } catch (err) {
+      console.error('Failed to update favourite')
+    }
+  }
+
   const handleDeleteProject = async (projectId) => {
+    setDeleteError(null)
     setDeletingId(projectId)
     try {
       await client.delete(`/projects/${projectId}`)
       setProjects(prev => prev.filter(p => p.id !== projectId))
+      setConfirmDeleteId(null)
       toast.success('Project deleted')
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to delete project')
+      const msg = err.response?.data?.detail || 'Failed to delete project. Please try again.'
+      setDeleteError(msg)
+      setConfirmDeleteId(null)
     } finally {
       setDeletingId(null)
     }
@@ -154,7 +170,7 @@ function Dashboard() {
       borderBottom: '1px solid rgba(192,132,252,0.1)',
       backdropFilter: 'blur(10px)',
     }}>
-<div
+      <div
         onClick={handleLogoClick}
         style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
       >
@@ -225,6 +241,21 @@ function Dashboard() {
       <Nav />
 
       <div style={{ padding: '60px 40px', maxWidth: '1200px', margin: '0 auto' }}>
+
+        {/* Delete Error Banner */}
+        {deleteError && (
+          <div style={{
+            background: 'rgba(255,100,100,0.08)',
+            border: '1px solid rgba(255,100,100,0.3)',
+            color: 'rgba(255,100,100,0.9)',
+            padding: '12px 20px', fontSize: '12px', letterSpacing: '1px',
+            marginBottom: '24px', display: 'flex',
+            justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            {deleteError}
+            <span onClick={() => setDeleteError(null)} style={{ cursor: 'pointer', opacity: 0.7 }}>✕</span>
+          </div>
+        )}
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px' }}>
@@ -369,72 +400,115 @@ function Dashboard() {
         {/* Projects grid */}
         {!loading && !fetchError && projects.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
-            {projects.map(project => (
-              <div key={project.id} style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(192,132,252,0.15)',
-                padding: '28px', cursor: 'pointer', transition: 'all 0.3s',
-                opacity: deletingId === project.id ? 0.4 : 1,
-              }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(192,132,252,0.4)'
-                  e.currentTarget.style.background = 'rgba(192,132,252,0.05)'
+            {[...projects]
+              .sort((a, b) => (b.is_favourite ? 1 : 0) - (a.is_favourite ? 1 : 0))
+              .map(project => (
+                <div key={project.id} style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(192,132,252,0.15)',
+                  padding: '28px', cursor: 'pointer', transition: 'all 0.3s',
+                  opacity: deletingId === project.id ? 0.4 : 1,
+                  position: 'relative',
                 }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(192,132,252,0.15)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
-                }}
-              >
-                <div style={{
-                  display: 'inline-block', background: 'rgba(192,132,252,0.1)',
-                  border: '1px solid rgba(192,132,252,0.2)', color: '#C084FC',
-                  padding: '4px 12px', fontSize: '10px', letterSpacing: '2px',
-                  textTransform: 'uppercase', marginBottom: '16px',
-                }}>{project.stage}</div>
-
-                <h3 style={{
-                  color: '#FFFFFF', fontSize: '18px', fontWeight: '300',
-                  letterSpacing: '2px', marginBottom: '12px',
-                }}>{project.title}</h3>
-
-                <p style={{
-                  color: '#94A3B8', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px',
-                  display: '-webkit-box', WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                }}>{project.description}</p>
-
-                {project.industry && (
-                  <p style={{
-                    color: '#9333EA', fontSize: '11px', letterSpacing: '2px',
-                    textTransform: 'uppercase', marginBottom: '20px',
-                  }}>{project.industry}</p>
-                )}
-
-                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                  <button onClick={() => navigate(`/project/${project.id}`)} style={{
-                    flex: 1, background: 'transparent',
-                    border: '1px solid rgba(192,132,252,0.3)', color: '#C084FC',
-                    padding: '8px', fontSize: '11px', letterSpacing: '2px',
-                    textTransform: 'uppercase', cursor: 'pointer',
-                  }}>View</button>
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'rgba(192,132,252,0.4)'
+                    e.currentTarget.style.background = 'rgba(192,132,252,0.05)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'rgba(192,132,252,0.15)'
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
+                  }}
+                >
+                  {/* Favourite Star */}
                   <button
-                    onClick={e => { e.stopPropagation(); handleDeleteProject(project.id) }}
-                    disabled={deletingId === project.id}
+                    onClick={e => { e.stopPropagation(); handleToggleFavourite(project.id) }}
                     style={{
-                      background: 'transparent', border: '1px solid rgba(255,100,100,0.2)',
-                      color: 'rgba(255,100,100,0.6)', padding: '8px 16px',
-                      fontSize: '11px', letterSpacing: '2px',
-                      cursor: deletingId === project.id ? 'not-allowed' : 'pointer',
+                      position: 'absolute', top: '16px', right: '16px',
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      fontSize: '18px',
+                      color: project.is_favourite ? '#FBBF24' : 'rgba(148,163,184,0.3)',
+                      transition: 'color 0.2s', padding: '4px', lineHeight: 1,
                     }}
-                  >{deletingId === project.id ? '...' : '✕'}</button>
-                </div>
+                    title={project.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
+                  >★</button>
 
-                <p style={{
-                  color: 'rgba(148,163,184,0.4)', fontSize: '10px',
-                  letterSpacing: '1px', marginTop: '16px',
-                }}>{new Date(project.created_at).toLocaleDateString()}</p>
-              </div>
-            ))}
+                  <div style={{
+                    display: 'inline-block', background: 'rgba(192,132,252,0.1)',
+                    border: '1px solid rgba(192,132,252,0.2)', color: '#C084FC',
+                    padding: '4px 12px', fontSize: '10px', letterSpacing: '2px',
+                    textTransform: 'uppercase', marginBottom: '16px',
+                  }}>{project.stage}</div>
+
+                  <h3 style={{
+                    color: '#FFFFFF', fontSize: '18px', fontWeight: '300',
+                    letterSpacing: '2px', marginBottom: '12px',
+                  }}>{project.title}</h3>
+
+                  <p style={{
+                    color: '#94A3B8', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px',
+                    display: '-webkit-box', WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                  }}>{project.description}</p>
+
+                  {project.industry && (
+                    <p style={{
+                      color: '#9333EA', fontSize: '11px', letterSpacing: '2px',
+                      textTransform: 'uppercase', marginBottom: '20px',
+                    }}>{project.industry}</p>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                    <button onClick={() => navigate(`/project/${project.id}`)} style={{
+                      flex: 1, background: 'transparent',
+                      border: '1px solid rgba(192,132,252,0.3)', color: '#C084FC',
+                      padding: '8px', fontSize: '11px', letterSpacing: '2px',
+                      textTransform: 'uppercase', cursor: 'pointer',
+                    }}>View</button>
+
+                    {confirmDeleteId === project.id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: '#94A3B8', fontSize: '11px', letterSpacing: '1px' }}>Sure?</span>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDeleteProject(project.id) }}
+                          style={{
+                            background: 'rgba(255,100,100,0.15)',
+                            border: '1px solid rgba(255,100,100,0.5)',
+                            color: 'rgba(255,100,100,0.9)',
+                            padding: '6px 12px', fontSize: '11px',
+                            letterSpacing: '1px', cursor: 'pointer',
+                          }}
+                        >Yes</button>
+                        <button
+                          onClick={e => { e.stopPropagation(); setConfirmDeleteId(null) }}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid rgba(148,163,184,0.3)',
+                            color: '#94A3B8', padding: '6px 12px',
+                            fontSize: '11px', letterSpacing: '1px', cursor: 'pointer',
+                          }}
+                        >No</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); setConfirmDeleteId(project.id) }}
+                        disabled={deletingId === project.id}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(255,100,100,0.2)',
+                          color: 'rgba(255,100,100,0.6)', padding: '8px 16px',
+                          fontSize: '11px', letterSpacing: '2px',
+                          cursor: deletingId === project.id ? 'not-allowed' : 'pointer',
+                        }}
+                      >{deletingId === project.id ? '...' : '✕'}</button>
+                    )}
+                  </div>
+
+                  <p style={{
+                    color: 'rgba(148,163,184,0.4)', fontSize: '10px',
+                    letterSpacing: '1px', marginTop: '16px',
+                  }}>{new Date(project.created_at).toLocaleDateString()}</p>
+                </div>
+              ))}
           </div>
         )}
 
@@ -451,15 +525,13 @@ function Dashboard() {
                 background: 'transparent',
                 border: '1px solid rgba(192,132,252,0.2)',
                 color: currentPage === 1 ? '#334155' : '#94A3B8',
-                padding: '8px 16px', fontSize: '11px',
-                letterSpacing: '2px',
+                padding: '8px 16px', fontSize: '11px', letterSpacing: '2px',
                 cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
               }}
             >← Prev</button>
 
             {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i + 1}
+              <button key={i + 1}
                 onClick={() => fetchProjects({ search, stage: activeStage, industry: activeIndustry }, i + 1)}
                 style={{
                   background: currentPage === i + 1 ? 'rgba(192,132,252,0.15)' : 'transparent',
@@ -478,8 +550,7 @@ function Dashboard() {
                 background: 'transparent',
                 border: '1px solid rgba(192,132,252,0.2)',
                 color: currentPage === totalPages ? '#334155' : '#94A3B8',
-                padding: '8px 16px', fontSize: '11px',
-                letterSpacing: '2px',
+                padding: '8px 16px', fontSize: '11px', letterSpacing: '2px',
                 cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
               }}
             >Next →</button>

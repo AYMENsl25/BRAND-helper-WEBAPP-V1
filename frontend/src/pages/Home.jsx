@@ -300,8 +300,8 @@ function Home() {
           transform: 'translateX(-50%)',
         }}>
           {[
-            { label: 'Identity Lab',        path: '/lab'       },
-            { label: 'Kit Maker',           path: '/dashboard' },
+            { label: 'Identity Lab', path: '/lab' },
+            { label: 'Kit Maker', path: '/dashboard?from=kit-maker' },
             { label: 'Market Intelligence', path: '/dashboard' },
           ].map((item) => (
             <span
