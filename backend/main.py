@@ -10,6 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import create_db_and_tables
 from core.config import settings
 from routers import auth, projects, analysis, brand, feedback, resources
+from fastapi.staticfiles import StaticFiles
+import os
+
 # from routers import analysis, brand
 
 # ── Create the FastAPI app ────────────────────────────
@@ -18,6 +21,7 @@ app = FastAPI(
     version=settings.APP_VERSION,
     description="AI-powered Brand Identity & Startup Validation Platform",
 )
+
 
 
 # ── CORS Middleware ───────────────────────────────────
@@ -64,4 +68,7 @@ app.include_router(brand.router,    prefix="/brand",    tags=["Brand"])
 app.include_router(feedback.router,  prefix="/feedback",  tags=["Feedback"])
 app.include_router(resources.router, prefix="/resources", tags=["Resources"])
 
-
+# ── Static Files ─────────────────────────────────────
+# This serves files from the "static" folder at /static URL
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")

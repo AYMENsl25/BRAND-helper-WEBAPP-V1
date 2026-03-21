@@ -102,3 +102,9 @@ class UserProfileRead(BaseModel):
     bio: Optional[str]
 
     model_config = {"from_attributes": True}
+
+
+class UserStatsRead(BaseModel):
+    """User statistics summary."""
+    total_projects: int
+    member_since: datetime

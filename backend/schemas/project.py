@@ -144,6 +144,17 @@ class ColorPaletteRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LogoPromptRead(BaseModel):
+    id: int
+    prompt_text: str
+    image_url: Optional[str]
+    style: Optional[str]
+    is_selected: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class BrandAssetRead(BaseModel):
     id: int
     project_id: int
@@ -152,6 +163,7 @@ class BrandAssetRead(BaseModel):
     personality_type: Optional[str]
     mission_statement: Optional[str]
     color_palette: Optional[ColorPaletteRead]
+    logo_prompts: List[LogoPromptRead] = []
 
     model_config = {"from_attributes": True}
 '''

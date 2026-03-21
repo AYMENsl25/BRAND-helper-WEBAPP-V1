@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import client from '../api/client'
+import { useToast, ToastContainer } from '../components/Toast'
 
 const INDUSTRIES = [
   'AI / Machine Learning', 'Fintech', 'Health / MedTech',
@@ -22,12 +23,24 @@ const STAGES = [
   { label: 'Already Launched', value: 'launched', icon: '✅' },
 ]
 
+const LOADING_STEPS = [
+  'Creating your project...',
+  'Analyzing your idea with AI...',
+  'Building your brand identity...',
+]
+
 function Lab() {
   const navigate = useNavigate()
+  const { toasts, toast } = useToast()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
   const [error, setError] = useState('')
   const [otherIndustry, setOtherIndustry] = useState('')
+
+  const handleLogoClick = () => {
+    navigate(localStorage.getItem('token') ? '/dashboard' : '/')
+  }
 
   const [formData, setFormData] = useState({
     description: '',
@@ -50,6 +63,7 @@ function Lab() {
   const handleSubmit = async () => {
     setLoading(true)
     setError('')
+    setLoadingStep(0)
     try {
       // Create project
       const industryValue = formData.industry === 'Other' ? otherIndustry.trim() : formData.industry
@@ -60,20 +74,21 @@ function Lab() {
         industry: industryValue,
         stage: formData.stage,
       })
-
       const projectId = projectRes.data.id
 
-      // Trigger AI analysis
+      setLoadingStep(1)
       await client.post(`/analysis/${projectId}/analyze`)
 
-      // Generate brand
+      setLoadingStep(2)
       await client.post(`/brand/${projectId}/generate`)
 
-      // Go to project detail
       navigate(`/project/${projectId}`)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Something went wrong')
+      const msg = err.response?.data?.detail || 'Something went wrong. Please try again.'
+      setError(msg)
+      toast.error(msg)
       setLoading(false)
+      setLoadingStep(0)
     }
   }
 
@@ -94,6 +109,66 @@ function Lab() {
       display: 'flex',
       flexDirection: 'column',
     }}>
+      <ToastContainer toasts={toasts} />
+
+      {/* Full-screen loading overlay */}
+      {loading && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          backgroundColor: '#030005',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: '32px',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(192,132,252,0.1) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          {/* Pulsing orb */}
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '50%',
+            background: 'radial-gradient(circle, #C084FC, #9333EA)',
+            boxShadow: '0 0 40px rgba(192,132,252,0.6)',
+            animation: 'pulse 1.8s ease-in-out infinite',
+          }} />
+          <style>{`
+            @keyframes pulse {
+              0%, 100% { transform: scale(1);   box-shadow: 0 0 40px rgba(192,132,252,0.6); }
+              50%       { transform: scale(1.1); box-shadow: 0 0 60px rgba(192,132,252,0.9); }
+            }
+          `}</style>
+          {/* Steps */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            {LOADING_STEPS.map((label, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                opacity: i < loadingStep ? 0.35 : i === loadingStep ? 1 : 0.2,
+                transition: 'opacity 0.4s',
+              }}>
+                <span style={{
+                  width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
+                  background: i < loadingStep
+                    ? 'rgba(105,219,124,0.8)'
+                    : i === loadingStep
+                      ? '#C084FC'
+                      : 'rgba(192,132,252,0.15)',
+                  border: `1px solid ${i === loadingStep ? '#C084FC' : 'transparent'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '10px', color: '#030005', fontWeight: '700',
+                  transition: 'all 0.4s',
+                }}>
+                  {i < loadingStep ? '✓' : ''}
+                </span>
+                <span style={{
+                  color: i === loadingStep ? '#FFFFFF' : '#94A3B8',
+                  fontSize: '13px', letterSpacing: '2px', textTransform: 'uppercase',
+                  transition: 'color 0.4s',
+                }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{
@@ -104,7 +179,7 @@ function Lab() {
         borderBottom: '1px solid rgba(192,132,252,0.1)',
       }}>
         <div
-          onClick={() => navigate('/')}
+          onClick={handleLogoClick}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -608,7 +683,7 @@ function Lab() {
               e.target.style.color = canProceed() && !loading ? '#C084FC' : 'rgba(192,132,252,0.3)'
             }}
           >
-            {loading ? 'Generating...' : step === totalSteps ? 'Generate Identity →' : 'Next →'}
+            {step === totalSteps ? 'Generate Identity →' : 'Next →'}
           </button>
         </div>
       </div>

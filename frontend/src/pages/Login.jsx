@@ -1,40 +1,94 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import client from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 function Login() {
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
-  const [error, setError] = useState('')
+  const { login } = useAuth()
+  const [formData, setFormData] = useState({ email: '', password: '' })
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' })
+  const [touched, setTouched] = useState({ email: false, password: false })
+  const [focused, setFocused] = useState({ email: false, password: false })
   const [loading, setLoading] = useState(false)
+
+  const validate = (name, value) => {
+    if (name === 'email') {
+      if (!value) return 'Email is required'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address'
+      return ''
+    }
+    if (name === 'password') {
+      if (!value) return 'Password is required'
+      return ''
+    }
+    return ''
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+    if (touched[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: validate(name, value) }))
+    }
+  }
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target
+    setTouched(prev => ({ ...prev, [name]: true }))
+    setFocused(prev => ({ ...prev, [name]: false }))
+    setFieldErrors(prev => ({ ...prev, [name]: validate(name, value) }))
+  }
+
+  const handleFocus = (e) => {
+    setFocused(prev => ({ ...prev, [e.target.name]: true }))
+  }
+
+  const getBorderColor = (name) => {
+    if (fieldErrors[name] && touched[name]) return 'rgba(255,100,100,0.8)'
+    if (touched[name] && !fieldErrors[name] && formData[name]) return 'rgba(100,220,130,0.6)'
+    if (focused[name]) return '#C084FC'
+    return 'rgba(192,132,252,0.2)'
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
+    const emailErr = validate('email', formData.email)
+    const passwordErr = validate('password', formData.password)
+    setFieldErrors({ email: emailErr, password: passwordErr })
+    setTouched({ email: true, password: true })
+    if (emailErr || passwordErr) return
 
+    setLoading(true)
     try {
-      // Send as form data (OAuth2 format)
       const form = new FormData()
       form.append('username', formData.email)
       form.append('password', formData.password)
-
       const response = await client.post('/auth/login', form)
-      
-      // Save token to localStorage
       localStorage.setItem('token', response.data.access_token)
-      
-      // Go to dashboard
+      login(response.data.access_token)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password')
+      const detail = err.response?.data?.detail || 'Invalid email or password'
+      setFieldErrors({ email: detail, password: '' })
+      setTouched({ email: true, password: true })
     } finally {
       setLoading(false)
     }
   }
+
+  const inputStyle = (name) => ({
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    border: `1px solid ${getBorderColor(name)}`,
+    color: '#FFFFFF',
+    padding: '12px 16px',
+    fontSize: '14px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    letterSpacing: '1px',
+    transition: 'border-color 0.2s',
+  })
 
   return (
     <div style={{
@@ -48,7 +102,6 @@ function Login() {
       overflow: 'hidden',
     }}>
 
-      {/* Aurora Background */}
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -60,7 +113,6 @@ function Login() {
         pointerEvents: 'none',
       }} />
 
-      {/* Login Card */}
       <div style={{
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(192,132,252,0.2)',
@@ -99,7 +151,6 @@ function Login() {
           }}>BELIS</span>
         </div>
 
-        {/* Title */}
         <h2 style={{
           color: '#FFFFFF',
           fontSize: '20px',
@@ -119,24 +170,7 @@ function Login() {
           textTransform: 'uppercase',
         }}>Sign in to continue</p>
 
-        {/* Error */}
-        {error && (
-          <div style={{
-            background: 'rgba(255,0,0,0.1)',
-            border: '1px solid rgba(255,0,0,0.3)',
-            color: '#ff6b6b',
-            padding: '12px',
-            marginBottom: '20px',
-            fontSize: '13px',
-            letterSpacing: '1px',
-          }}>
-            {error}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Email */}
+        <form onSubmit={handleSubmit} noValidate>
           <div style={{ marginBottom: '20px' }}>
             <label style={{
               color: '#94A3B8',
@@ -148,26 +182,22 @@ function Login() {
             }}>Email</label>
             <input
               type="email"
+              name="email"
               value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
-              required
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(192,132,252,0.2)',
-                color: '#FFFFFF',
-                padding: '12px 16px',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                letterSpacing: '1px',
-              }}
-              onFocus={e => e.target.style.borderColor = '#C084FC'}
-              onBlur={e => e.target.style.borderColor = 'rgba(192,132,252,0.2)'}
+              onChange={handleChange}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              style={inputStyle('email')}
             />
+            {fieldErrors.email && touched.email && (
+              <p style={{
+                color: '#ff6b6b',
+                fontSize: '11px',
+                marginTop: '6px',
+              }}>{fieldErrors.email}</p>
+            )}
           </div>
 
-          {/* Password */}
           <div style={{ marginBottom: '32px' }}>
             <label style={{
               color: '#94A3B8',
@@ -179,26 +209,22 @@ function Login() {
             }}>Password</label>
             <input
               type="password"
+              name="password"
               value={formData.password}
-              onChange={e => setFormData({...formData, password: e.target.value})}
-              required
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(192,132,252,0.2)',
-                color: '#FFFFFF',
-                padding: '12px 16px',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                letterSpacing: '1px',
-              }}
-              onFocus={e => e.target.style.borderColor = '#C084FC'}
-              onBlur={e => e.target.style.borderColor = 'rgba(192,132,252,0.2)'}
+              onChange={handleChange}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              style={inputStyle('password')}
             />
+            {fieldErrors.password && touched.password && (
+              <p style={{
+                color: '#ff6b6b',
+                fontSize: '11px',
+                marginTop: '6px',
+              }}>{fieldErrors.password}</p>
+            )}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -231,7 +257,6 @@ function Login() {
           </button>
         </form>
 
-        {/* Register Link */}
         <p style={{
           color: '#94A3B8',
           fontSize: '12px',
@@ -245,7 +270,6 @@ function Login() {
             textDecoration: 'none',
           }}>Create one</Link>
         </p>
-
       </div>
     </div>
   )
