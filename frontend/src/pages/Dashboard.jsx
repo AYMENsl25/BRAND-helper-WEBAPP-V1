@@ -7,6 +7,8 @@ function Dashboard() {
   const [projects, setProjects] = useState([])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
 
   useEffect(() => {
     // Check if user is logged in
@@ -39,12 +41,25 @@ function Dashboard() {
     navigate('/')
   }
 
+  const handleToggleFavourite = async (projectId) => {
+    try {
+      const res = await client.patch(`/projects/${projectId}/favourite`)
+      setProjects(projects.map(p => p.id === projectId ? { ...p, is_favourite: res.data.is_favourite } : p))
+    } catch (err) {
+      console.error('Failed to update favourite')
+    }
+  }
+
   const handleDeleteProject = async (projectId) => {
+    setDeleteError(null)
     try {
       await client.delete(`/projects/${projectId}`)
       setProjects(projects.filter(p => p.id !== projectId))
+      setConfirmDeleteId(null)
     } catch (err) {
-      console.error('Delete failed')
+      const msg = err.response?.data?.detail || 'Failed to delete project. Please try again.'
+      setDeleteError(msg)
+      setConfirmDeleteId(null)
     }
   }
 
@@ -110,7 +125,7 @@ function Dashboard() {
         {/* Nav Links */}
         {[
   { label: 'Identity Lab', path: '/lab' },
-  { label: 'Kit Maker', path: '/dashboard' },
+  { label: 'Kit Maker', path: '/dashboard?from=kit-maker' },
   { label: 'Market Intelligence', path: '/dashboard' },
 ].map((item) => (
   <span
@@ -160,6 +175,28 @@ function Dashboard() {
 
       {/* Main Content */}
       <div style={{ padding: '60px 40px', maxWidth: '1200px', margin: '0 auto' }}>
+
+        {/* Delete Error Banner */}
+        {deleteError && (
+          <div style={{
+            background: 'rgba(255,100,100,0.08)',
+            border: '1px solid rgba(255,100,100,0.3)',
+            color: 'rgba(255,100,100,0.9)',
+            padding: '12px 20px',
+            fontSize: '12px',
+            letterSpacing: '1px',
+            marginBottom: '24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            {deleteError}
+            <span
+              onClick={() => setDeleteError(null)}
+              style={{ cursor: 'pointer', opacity: 0.7 }}
+            >✕</span>
+          </div>
+        )}
 
         {/* Header */}
         <div style={{
@@ -260,7 +297,7 @@ function Dashboard() {
             gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
             gap: '24px',
           }}>
-            {projects.map(project => (
+            {[...projects].sort((a, b) => b.is_favourite - a.is_favourite).map(project => (
               <div
                 key={project.id}
                 style={{
@@ -280,6 +317,25 @@ function Dashboard() {
                   e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
                 }}
               >
+                {/* Favourite Star */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleToggleFavourite(project.id) }}
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    color: project.is_favourite ? '#FBBF24' : 'rgba(148,163,184,0.3)',
+                    transition: 'color 0.2s',
+                    padding: '4px',
+                    lineHeight: 1,
+                  }}
+                  title={project.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
+                >★</button>
+
                 {/* Stage Badge */}
                 <div style={{
                   display: 'inline-block',
@@ -351,23 +407,50 @@ function Dashboard() {
                   >
                     View
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteProject(project.id)
-                    }}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid rgba(255,100,100,0.2)',
-                      color: 'rgba(255,100,100,0.6)',
-                      padding: '8px 16px',
-                      fontSize: '11px',
-                      letterSpacing: '2px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ✕
-                  </button>
+                  {confirmDeleteId === project.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#94A3B8', fontSize: '11px', letterSpacing: '1px' }}>Sure?</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id) }}
+                        style={{
+                          background: 'rgba(255,100,100,0.15)',
+                          border: '1px solid rgba(255,100,100,0.5)',
+                          color: 'rgba(255,100,100,0.9)',
+                          padding: '6px 12px',
+                          fontSize: '11px',
+                          letterSpacing: '1px',
+                          cursor: 'pointer',
+                        }}
+                      >Yes</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null) }}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(148,163,184,0.3)',
+                          color: '#94A3B8',
+                          padding: '6px 12px',
+                          fontSize: '11px',
+                          letterSpacing: '1px',
+                          cursor: 'pointer',
+                        }}
+                      >No</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(project.id) }}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(255,100,100,0.2)',
+                        color: 'rgba(255,100,100,0.6)',
+                        padding: '8px 16px',
+                        fontSize: '11px',
+                        letterSpacing: '2px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
 
                 {/* Date */}

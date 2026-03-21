@@ -53,6 +53,7 @@ class ProjectRead(BaseModel):
     description: str
     industry: Optional[str]
     stage: str
+    is_favourite: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}

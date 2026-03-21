@@ -74,13 +74,16 @@ function Login() {
       }}>
 
         {/* Logo */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-          marginBottom: '40px',
-        }}>
+        <div
+          onClick={() => navigate('/')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            marginBottom: '40px',
+            cursor: 'pointer',
+          }}>
           <div style={{
             width: '28px',
             height: '28px',
