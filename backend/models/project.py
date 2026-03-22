@@ -31,6 +31,7 @@ class Project(SQLModel, table=True):
         default="idea",
         max_length=50
     )
+    is_favourite: bool = Field(default=False)
     created_at: datetime = Field(
         default_factory=datetime.utcnow
     )

@@ -125,13 +125,17 @@ function Login() {
         backdropFilter: 'blur(10px)',
       }}>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-          marginBottom: '40px',
-        }}>
+        {/* Logo */}
+        <div
+          onClick={() => navigate('/')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            marginBottom: '40px',
+            cursor: 'pointer',
+          }}>
           <div style={{
             width: '28px',
             height: '28px',
