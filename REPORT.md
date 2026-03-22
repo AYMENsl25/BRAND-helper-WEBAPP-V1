@@ -195,7 +195,7 @@ Additional responsibilities included:
 
 Presentation Design → handled by Amr & Ayman
 Documentation & Report Updates → handled by Omar
-GitHub Management → organizing branches and files
+GitHub Management → Handled by Omar
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 7. Conclusion
 The BELIS project demonstrates a complete full-stack AI-powered system combining:
